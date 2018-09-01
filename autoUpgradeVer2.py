@@ -21,8 +21,8 @@ from subprocess import TimeoutExpired
 from colorama import init, Fore, Back, Style
 
 
-print("[INFO] System encoding format: {0}".format(sys.getdefaultencoding()))
 init(autoreset=True)
+print("[INFO] System encoding format: {0}".format(sys.getdefaultencoding()))
 # 由于部分包库存在兼容性问题，暂时不便升级的库
 notUpgradeLibs = ['amqp', 'beautifulsoup4', 'babel', 'grpcio', 'botocore',
                   'html5lib', 'boto3', 'gevent', 'mxnet', 'opencv-python',
