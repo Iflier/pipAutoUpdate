@@ -10,7 +10,7 @@ Modified on: 2018.07.18
 Modified on: 2018.07.19
 把升级的包记录到日志
 Modified on: 2018.08.31
-执行自动升级命令前，检查当前的网络是否通常
+执行自动升级命令前，检查当前的网络是否可用
 """
 import sys
 import logging
