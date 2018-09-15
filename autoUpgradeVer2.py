@@ -39,7 +39,7 @@ logging.basicConfig(filename="upgrade.log", filemode='a',
 logger = logging.getLogger()
 
 
-def runCommand(command: str, timeout: int = 150) -> TypeVar("commandResultType", List[bytes], None):
+def runCommand(command: str, timeout: int = 300) -> TypeVar("commandResultType", List[bytes], None):
     """
     1.命令执行超时，返回None
     2.执行成功时，返回按行的未被解码的控制台输出
@@ -59,7 +59,7 @@ def runCommand(command: str, timeout: int = 150) -> TypeVar("commandResultType",
         return None
 
 # 自动升级包之前，检查当前网络环境
-pingCommandResultLines = runCommand("ping -n 8 www.baidu.com")
+pingCommandResultLines = runCommand("ping -n 10 www.baidu.com")
 if pingCommandResultLines is None:
     sys.exit(0)
 elif len(pingCommandResultLines) == 1:
@@ -86,6 +86,8 @@ pipVersion = pipToolVersionCheckResult[0].decode(encoding='utf-8').split()[1]
 if pipVersion.startswith("1"):
     logger.info("Running command for checking packages to be upgrade.")
     pipListCommandResultLines = runCommand("pip list -o --format columns")
+    if pipListCommandResultLines is None:
+        sys.exit(0)
     for line in pipListCommandResultLines:
         packagesInfo = line.decode()
         if 'wheel' in packagesInfo and packagesInfo.split()[0].lower() not in notUpgradeLibs:
@@ -96,7 +98,7 @@ if pipVersion.startswith("1"):
     if len(prepareUpgradeLibs) != 0:
         logger.info("Begin to upgrade packages.")
         print("There are {0:^5,d} packages need to upgrade, they are:\n {1}".format(len(prepareUpgradeLibs), prepareUpgradeLibs))
-        print(Fore.RED + Back.CYAN + "Upgrading packages ..." + Style.RESET_ALL)
+        print(Fore.RED + Back.BLUE + "Upgrading packages ..." + Style.RESET_ALL)
         for package, packageInfo in zip(prepareUpgradeLibs, prepareUpgradeLibsInfo):
             pipInstallCommandResult = runCommand("pip install -U {0}".format(package), timeout=155)
             if pipInstallCommandResult is None:
