@@ -39,7 +39,7 @@ logging.basicConfig(filename="upgrade.log", filemode='a',
 logger = logging.getLogger()
 
 
-def runCommand(command: str, timeout: int = 300) -> TypeVar("commandResultType", List[bytes], None):
+def runCommand(command: str, timeout: int = 150) -> TypeVar("commandResultType", List[bytes], None):
     """
     1.命令执行超时，返回None
     2.执行成功时，返回按行的未被解码的控制台输出
@@ -85,7 +85,7 @@ pipVersion = pipToolVersionCheckResult[0].decode(encoding='utf-8').split()[1]
 # 针对不同的 pip 版本,应用不同的输出
 if pipVersion.startswith("1"):
     logger.info("Running command for checking packages to be upgrade.")
-    pipListCommandResultLines = runCommand("pip list -o --format columns")
+    pipListCommandResultLines = runCommand("pip list -o --format columns", timeout=300)
     if pipListCommandResultLines is None:
         sys.exit(0)
     for line in pipListCommandResultLines:
