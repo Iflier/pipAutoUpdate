@@ -10,6 +10,10 @@
 3.懒 :-)</br>
 </br>
 
+## Update 2018.10.05
+
+该工具仅在`Windows`系统上测试过
+
 # License
 
 GPL V2.0</br>

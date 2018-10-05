@@ -11,6 +11,8 @@ Modified on: 2018.07.19
 把升级的包记录到日志
 Modified on: 2018.08.31
 执行自动升级命令前，检查当前的网络是否可用
+Modified on: 2018.10.05
+添加升级pip工具自身的命令
 """
 import sys
 import logging
@@ -99,6 +101,20 @@ if pipVersion.startswith("1"):
         logger.info("Begin to upgrade packages.")
         print("There are {0:^5,d} packages need to upgrade, they are:\n {1}".format(len(prepareUpgradeLibs), prepareUpgradeLibs))
         print(Fore.RED + Back.BLUE + "Upgrading packages ..." + Style.RESET_ALL)
+        # 如果检查到pip工具自身需要升级，先升级自己
+        if "pip" in prepareUpgradeLibs:
+            if sys.platform.startswith("win32"):
+                pipInstallCommandResult = runCommand("python -m pip install --upgrade pip")
+                if pipInstallCommandResult is None:
+                    print("During upgrade package: {0}, occurred an error :-(".format("pip"))
+                    logger.error("When upgrade {0}, an error occurred.".format("pip"))
+                else:
+                    print("Succeed upgrade package: {0}, from {1} to {2}.".format("pip", prepareUpgradeLibsInfo[prepareUpgradeLibs.index("pip")].split()[1], prepareUpgradeLibsInfo[prepareUpgradeLibs.index("pip")].split()[2]))
+                    logger.info("Upgrade package {0} from {1} to {2} succeed.".format("pip", prepareUpgradeLibsInfo[prepareUpgradeLibs.index("pip")].split()[1], prepareUpgradeLibsInfo[prepareUpgradeLibs.index("pip")].split()[2]))
+            # 从两个列表中删除自身的信息，这样不会影响后面其他包的升级
+            # 可能是其他的OS，因为升级使用命令可能不一样，还是把pip及其升级信息从列表中删除比较稳定。比如Ubuntu 系统可能使用的是pip3工具升级各种包
+            prepareUpgradeLibsInfo.remove(prepareUpgradeLibsInfo[prepareUpgradeLibs.index("pip")])
+            prepareUpgradeLibs.remove("pip")  # 这个是对列表自身的修改，返回None
         for package, packageInfo in zip(prepareUpgradeLibs, prepareUpgradeLibsInfo):
             pipInstallCommandResult = runCommand("pip install -U {0}".format(package), timeout=155)
             if pipInstallCommandResult is None:
