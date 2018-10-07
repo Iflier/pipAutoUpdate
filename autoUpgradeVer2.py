@@ -13,7 +13,10 @@ Modified on: 2018.08.31
 执行自动升级命令前，检查当前的网络是否可用
 Modified on: 2018.10.05
 添加升级pip工具自身的命令
+Modified on: 2018.10.07
+添加re，用以匹配 pip 的版本号；使用字典保存待升级包的信息，以前用的是两个字典分别保存
 """
+import re
 import sys
 import logging
 import subprocess
@@ -33,8 +36,9 @@ notUpgradeLibs = ['amqp', 'beautifulsoup4', 'babel', 'grpcio', 'botocore',
                   'bleach', 'async-timeout', 'setuptools', 'protobuf',
                   'pyqt5', 'numpy', 'spyder-kernels', 'prompt-toolkit',
                   ]
-prepareUpgradeLibs = list()
-prepareUpgradeLibsInfo = list()
+
+prepareUpgradeLibsInfoDict = dict()
+
 logging.basicConfig(filename="upgrade.log", filemode='a',
                     datefmt="%c", level=logging.DEBUG,
                     format="%(levelname)s %(asctime)s %(message)s")
@@ -85,7 +89,8 @@ pipToolVersionCheckResult = runCommand("pip --version")
 pipVersion = pipToolVersionCheckResult[0].decode(encoding='utf-8').split()[1]
 
 # 针对不同的 pip 版本,应用不同的输出
-if pipVersion.startswith("1"):
+# 使用re匹配大于10.x以上的 pip 版本。记得最开始时pip还是8.x的版本，不知不觉已经到了18.x的版本了
+if bool(re.match(r"^[1-9]+\d+", pipVersion[:2])):
     logger.info("Running command for checking packages to be upgrade.")
     pipListCommandResultLines = runCommand("pip list -o --format columns", timeout=300)
     if pipListCommandResultLines is None:
@@ -93,29 +98,28 @@ if pipVersion.startswith("1"):
     for line in pipListCommandResultLines:
         packagesInfo = line.decode()
         if 'wheel' in packagesInfo and packagesInfo.split()[0].lower() not in notUpgradeLibs:
-            prepareUpgradeLibsInfo.append(packagesInfo)
-            prepareUpgradeLibs.append(packagesInfo.split()[0])
+            # 以将要升级的包名为字典的 key，把这个包的升级信息作为对应于这个 key 的 value
+            prepareUpgradeLibsInfoDict[packagesInfo.split()[0]] = packagesInfo
     # print(complPro.stderr.decode())
     # 针对有需要升级的包的情况
-    if len(prepareUpgradeLibs) != 0:
+    if len(prepareUpgradeLibsInfoDict) != 0:
         logger.info("Begin to upgrade packages.")
-        print("There are {0:^5,d} packages need to upgrade, they are:\n {1}".format(len(prepareUpgradeLibs), prepareUpgradeLibs))
+        print("There are {0:^5,d} packages need to upgrade, they are:\n {1}".format(len(prepareUpgradeLibsInfoDict), list(prepareUpgradeLibsInfoDict.keys()))
         print(Fore.RED + Back.BLUE + "Upgrading packages ..." + Style.RESET_ALL)
         # 如果检查到pip工具自身需要升级，先升级自己
-        if "pip" in prepareUpgradeLibs:
+        if "pip" in prepareUpgradeLibsInfoDict:
             if sys.platform.startswith("win32"):
                 pipInstallCommandResult = runCommand("python -m pip install --upgrade pip")
                 if pipInstallCommandResult is None:
                     print("During upgrade package: {0}, occurred an error :-(".format("pip"))
                     logger.error("When upgrade {0}, an error occurred.".format("pip"))
                 else:
-                    print("Succeed upgrade package: {0}, from {1} to {2}.".format("pip", prepareUpgradeLibsInfo[prepareUpgradeLibs.index("pip")].split()[1], prepareUpgradeLibsInfo[prepareUpgradeLibs.index("pip")].split()[2]))
-                    logger.info("Upgrade package {0} from {1} to {2} succeed.".format("pip", prepareUpgradeLibsInfo[prepareUpgradeLibs.index("pip")].split()[1], prepareUpgradeLibsInfo[prepareUpgradeLibs.index("pip")].split()[2]))
+                    print("Succeed upgrade package: {0}, from {1} to {2}.".format("pip", prepareUpgradeLibsInfoDict["pip"].split()[1], prepareUpgradeLibsInfoDict["pip"].split()[2]))
+                    logger.info("Upgrade package {0} from {1} to {2} succeed.".format("pip", prepareUpgradeLibsInfoDict["pip"].split()[1], prepareUpgradeLibsInfoDict["pip"].split()[2]))
             # 从两个列表中删除自身的信息，这样不会影响后面其他包的升级
             # 可能是其他的OS，因为升级使用命令可能不一样，还是把pip及其升级信息从列表中删除比较稳定。比如Ubuntu 系统可能使用的是pip3工具升级各种包
-            prepareUpgradeLibsInfo.remove(prepareUpgradeLibsInfo[prepareUpgradeLibs.index("pip")])
-            prepareUpgradeLibs.remove("pip")  # 这个是对列表自身的修改，返回None
-        for package, packageInfo in zip(prepareUpgradeLibs, prepareUpgradeLibsInfo):
+            del prepareUpgradeLibsInfoDict["pip"]
+        for package, packageInfo in prepareUpgradeLibsInfoDict.items():
             pipInstallCommandResult = runCommand("pip install -U {0}".format(package), timeout=155)
             if pipInstallCommandResult is None:
                 print("During upgrade package: {0}, occurred an error :-(".format(package))
@@ -138,6 +142,6 @@ if len(pipCheckCommandResultLines) != 0:
     for line in pipCheckCommandResultLines:
         print(line.decode(encoding='utf-8'))
 else:
-    print("Congratuations! All the libraries are compatied with each other.!")
+    print("Congratuations! All the libraries are compatible with each other.!")
 logger.info("Done.")
 print(Fore.BLUE + Back.BLACK + "Done." + Style.RESET_ALL)
