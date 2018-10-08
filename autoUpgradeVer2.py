@@ -74,10 +74,11 @@ elif len(pingCommandResultLines) == 1:
     sys.exit(0)
 else:
     # 解析命令行输出。Windows命令行输出为GBK编码的字节
+    # 注意下一行使用中文逗号拆分行时使用的索引为-2，它真的是-2
     statisticResult = pingCommandResultLines[-3].decode("GBK").split('，')[-2]  # 这个是汉字符号的逗号
     print("Statistic result: {0}".format(statisticResult))
     packetLossRate = statisticResult.split()[2]
-    print("PacketLoss Rate = {0} %".format(packetLossRate))
+    print("PacketLoss Rate = {0}".format(statisticResult.split()[-2].strip('(')))
     if int(packetLossRate) >= 50:
         # 丢包率大于 50% 的情况下，退出升级
         print("Current network environment may not good, prepareing to exit ...")
@@ -104,7 +105,7 @@ if bool(re.match(r"^[1-9]+\d+", pipVersion[:2])):
     # 针对有需要升级的包的情况
     if len(prepareUpgradeLibsInfoDict) != 0:
         logger.info("Begin to upgrade packages.")
-        print("There are {0:^5,d} packages need to upgrade, they are:\n {1}".format(len(prepareUpgradeLibsInfoDict), list(prepareUpgradeLibsInfoDict.keys()))
+        print("There are {0:^5,d} packages need to upgrade, they are:\n {1}".format(len(prepareUpgradeLibsInfoDict), list(prepareUpgradeLibsInfoDict.keys())))
         print(Fore.RED + Back.BLUE + "Upgrading packages ..." + Style.RESET_ALL)
         # 如果检查到pip工具自身需要升级，先升级自己
         if "pip" in prepareUpgradeLibsInfoDict:
