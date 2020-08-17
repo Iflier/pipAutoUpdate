@@ -13,6 +13,8 @@ Modified on: 2018.08.31
 执行自动升级命令前，检查当前的网络是否可用
 Modified on: 2018.10.05
 添加升级pip工具自身的命令
+Modified on: 2020.08.17
+新加排除自动升级的包
 """
 import sys
 import logging
@@ -32,6 +34,7 @@ notUpgradeLibs = ['amqp', 'beautifulsoup4', 'babel', 'grpcio', 'botocore',
                   'tensorflow', 'tensorboard', 'tqdm', 'yarl', 'kombu',
                   'bleach', 'async-timeout', 'setuptools', 'protobuf',
                   'pyqt5', 'numpy', 'spyder-kernels', 'prompt-toolkit',
+                  'h11', 'isort', 'msgpack', 'protobuf', 'startlette'
                   ]
 prepareUpgradeLibs = list()
 prepareUpgradeLibsInfo = list()
